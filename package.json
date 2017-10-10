@@ -1,6 +1,6 @@
 {
-  "name": "cache",
-  "version": "0.0.0",
+  "name": "cache-service",
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
