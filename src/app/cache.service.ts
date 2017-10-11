@@ -24,10 +24,10 @@ export class CacheService {
     this.cache = {};
   }
 
-  public get(pathArray: string[]): any {
+  public get(path: string[]): any {
 
-    const ref = this.getRef(pathArray);
-    const key: string = pathArray[pathArray.length - 1];
+    const ref = this.getRef(path);
+    const key: string = path[path.length - 1];
     const record: CacheRecord | void = ref[key];
     if (record) {
       return record.data;
@@ -35,10 +35,10 @@ export class CacheService {
     return undefined;
   }
 
-  public remove(pathArray: string[]): void {
+  public remove(path: string[]): void {
 
-    const ref = this.getRef(pathArray);
-    const key: string = pathArray[pathArray.length - 1];
+    const ref = this.getRef(path);
+    const key: string = path[path.length - 1];
     const record: CacheRecord = ref[key];
     if (!record) {
       return;
@@ -50,16 +50,16 @@ export class CacheService {
     delete ref[key];
   }
 
-  public set(pathArray: string[], data: any, expiresInMin?: number | 'infinite'): void {
+  public set(path: string[], data: any, expiresInMin?: number | 'infinite'): void {
 
-    const ref = this.getRef(pathArray);
-    const newKey = pathArray[pathArray.length - 1];
-    const expires = this.getExpiresOn(expiresInMin);
+    const ref = this.getRef(path);
+    const newKey = path[path.length - 1];
+    const timer = this.getTimer(expiresInMin);
 
-    if (expires !== 'infinite') {
+    if (timer !== 'infinite') {
       const timerId = setTimeout(() => {
         delete ref[newKey];
-      }, expires);
+      }, timer);
 
       ref[newKey] = {
         timerId: timerId,
@@ -72,10 +72,8 @@ export class CacheService {
     ref[newKey] = { data: data } as CacheRecord;
   }
 
-  /**
-   * Converts minutes to milliseconds
-   */
-  private getExpiresOn(expiresInMin: number | 'infinite'): number | 'infinite' {
+  // Returns timeout value in milliseconds
+  private getTimer(expiresInMin?: number | 'infinite'): number | 'infinite' {
 
     if (expiresInMin === 'infinite') {
       return expiresInMin;
@@ -89,21 +87,21 @@ export class CacheService {
     return ms;
   }
 
-  private getRef(pathArray: string[]): any {
+  private getRef(path: string[]): any {
 
-    let path = this.cache;
-    if (pathArray.length === 0) {
+    let ref = this.cache;
+    if (path.length === 0) {
       throw new Error('CacheService.getPath() failed: pathArray can not be empty');
     }
-    const length: number = pathArray.length - 1;
+    const length: number = path.length - 1;
     for (let i = 0; i < length; i++) {
-      const key = pathArray[i];
-      if (!path[key]) {
-        path[key] = {};
+      const key = path[i];
+      if (!ref[key]) {
+        ref[key] = {};
       }
-      path = path[key];
+      ref = ref[key];
     }
-    return path;
+    return ref;
   }
 
 }
