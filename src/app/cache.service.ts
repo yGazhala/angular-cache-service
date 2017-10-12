@@ -12,9 +12,12 @@ interface CacheRecord {
 export class CacheService {
 
   private cache: { [key: string]: any } = {};
-  private readonly defaultExpiresInMin = 5;
+  private readonly defaultExpiresInMin: number = 5;
   private timerIDs: any[] = [];
 
+  /**
+   * Clears all stored data.
+   */
   public clear(): void {
     // cancel all setTimeout
     this.timerIDs.forEach((timer) => {
@@ -24,7 +27,13 @@ export class CacheService {
     this.cache = {};
   }
 
-  public get(path: string[]): any {
+  /**
+   * Extracts a stored value.
+   * @param path An array of strings. An empty array is not allowed.
+   * @example get(['parent', 'child']) returns the value from the path: parent.child
+   * @return A stored value or undefined if not found or storing time is expired.
+   */
+  public get(path: string[]): any | undefined {
 
     const ref = this.getRef(path);
     const key: string = path[path.length - 1];
@@ -35,6 +44,11 @@ export class CacheService {
     return undefined;
   }
 
+  /**
+   * Removes a stored value.
+   * @param path An array of strings. An empty array is not allowed.
+   * @example remove(['parent', 'child']) deletes the value on the path: parent.child
+   */
   public remove(path: string[]): void {
 
     const ref = this.getRef(path);
@@ -50,13 +64,22 @@ export class CacheService {
     delete ref[key];
   }
 
-  public set(path: string[], data: any, expiresInMin?: number | 'infinite'): void {
+  /**
+   * Sets a value.
+   * @param path An array of strings. An empty array is not allowed.
+   * @param data Data to store.
+   * @param expiresInMin A positive number as a timer for deleting data automatically.
+   * @example set(['parent', 'child'], 'value') Stores the string on the path parent.child during 5 minutes by default.
+   * @example set(['parent', 'child'], 'value', 10) Stores the string during 10 minutes.
+   * @example set(['parent', 'child'], 'value', Infinity) Stores the string until window object refreshes.
+   */
+  public set(path: string[], data: any, expiresInMin?: number): void {
 
     const ref = this.getRef(path);
     const newKey = path[path.length - 1];
     const timer = this.getTimer(expiresInMin);
 
-    if (timer !== 'infinite') {
+    if (isFinite(timer)) {
       const timerId = setTimeout(() => {
         delete ref[newKey];
       }, timer);
@@ -72,19 +95,21 @@ export class CacheService {
     ref[newKey] = { data: data } as CacheRecord;
   }
 
-  // Returns timeout value in milliseconds
-  private getTimer(expiresInMin?: number | 'infinite'): number | 'infinite' {
+  /**
+   * Returns a timeout value in milliseconds
+   */
+  private getTimer(expiresInMin?: number): number {
 
-    if (expiresInMin === 'infinite') {
-      return expiresInMin;
+    if (typeof expiresInMin === 'undefined') {
+      return this.defaultExpiresInMin * 60 * 1000;
     }
-    let ms: number;
-    if (!expiresInMin || typeof expiresInMin !== 'number') {
-      ms = this.defaultExpiresInMin * 60 * 1000;
-    } else {
-      ms = expiresInMin * 60 * 1000;
+    if (!isFinite(expiresInMin)) {
+      return Infinity;
     }
-    return ms;
+    if (!this.isPositiveNumber(expiresInMin)) {
+      throw new Error('CacheService.getTimer() failed: expiresInMin is not a positive number');
+    }
+    return expiresInMin * 60 * 1000;
   }
 
   private getRef(path: string[]): any {
@@ -104,4 +129,7 @@ export class CacheService {
     return ref;
   }
 
+  private isPositiveNumber(arg: any): boolean {
+    return !isNaN(parseFloat(arg)) && isFinite(arg) && arg > 0;
+  }
 }

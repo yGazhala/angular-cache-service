@@ -31,11 +31,11 @@ class TestService {
 
   constructor(cache: CacheService, http: HttpService) {}
 
-  // Tip: use the optional isRemote flag to get data from 
+  // Tip: use the optional isRefresh flag to get data from 
   // the server, if you need to update cached value.
-  public getData(id: string, isRemote: boolean = false): Promise<any> {
+  public getData(id: string, isRefresh: boolean = false): Promise<any> {
     // try to get localy stored data
-    if(!isRemote) {
+    if(!isRefresh) {
       const data = this.cache.get([id]);
       if(data) {
         return Promise.resolve(data);
@@ -56,8 +56,41 @@ class TestService {
 }
 ```
 
-## Interface
+## API
 
+```typescript
+/**
+ * Clears all stored data.
+ */
+clear(): undefined;
+
+/**
+ * Extracts a stored value.
+ * @param path An array of strings. An empty array is not allowed.
+ * @example get(['parent', 'child']) returns the value from the path: parent.child
+ * @return A stored value or undefined if not found or storing time is expired.
+ */
+get(path: string[]): any | undefined;
+
+
+/**
+ * Removes a stored value.
+ * @param path An array of strings. An empty array is not allowed.
+ * @example remove(['parent', 'child']) deletes the value on the path: parent.child
+ */
+remove(path: string[]): undefined
+
+/**
+ * Sets a value.
+ * @param path An array of strings. An empty array is not allowed.
+ * @param data Data to store.
+ * @param expiresInMin A positive number as a timer for deleting data automatically.
+ * @example set(['parent', 'child'], 'value') Stores the string on the path parent.child during 5 minutes by default.
+ * @example set(['parent', 'child'], 'value', 10) Stores the string during 10 minutes.
+ * @example set(['parent', 'child'], 'value', Infinity) Stores the string until window object refreshes.
+ */
+set(path: string[], data: any, expiresInMin?: number): undefined
+```
 
 ## Running unit tests
 

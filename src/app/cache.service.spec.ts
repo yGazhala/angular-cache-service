@@ -52,6 +52,25 @@ describe('CacheService', () => {
     );
   });
 
+  it('should throw Error if expiresInMin is not a positive number', () => {
+    const service = new CacheService();
+    expect(() => service.set(['test'], true, 0)).toThrowError(
+      'CacheService.getTimer() failed: expiresInMin is not a positive number'
+    );
+  });
+
+  it('expiresInMin can be Infinity', () => {
+    const service = new CacheService();
+
+    service.set(['test'], true, msToMin(50));
+    setTimeout(() => {
+      service.set(['test'], true, Infinity);
+    }, 30);
+    setTimeout(() => {
+      expect(service.get(['test'])).toBeTruthy();
+    }, 70);
+  });
+
   it('should update value and timeout', () => {
     const service = new CacheService();
     service.set(['counter'], 1, msToMin(50));
